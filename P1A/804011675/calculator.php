@@ -50,8 +50,8 @@
                                 "|" . "^0+[0-9]" .
                                 "|" . "[ \+\-\/\*]0{2,}\." .    // invalid combo:  decimals starting with multiple zeroes
                                 "|" . "^0{2,}\." .
-                                "|" . "\/0$" .                  // invalid combo:  divide by zero  (at the end)
-                                "|" . "\/0[ \+\-\/\*]" .        //                 divide by zero  (in the middle of expression)
+                                "|" . "\/ *0$" .                // invalid combo:  divide by zero  (at the end)
+                                "|" . "\/ *0[ \+\-\/\*]" .      //                 divide by zero  (in the middle of expression)
                                 "|" . "\- *\- *\-" .            // invalid combo: more than two -'s in a row
                                 ")";
                 $invalid = "/(".$invalid_char."|".$invalid_start."|".$invalid_end."|".$invalid_combo.")/";
