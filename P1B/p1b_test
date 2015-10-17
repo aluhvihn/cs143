@@ -1,6 +1,6 @@
 #!/bin/bash
-TMP_DIR=/tmp/p1a_tmp
-REQUIRED_FILES="readme.txt team.txt calculator.php"
+TMP_DIR=/tmp/p1b_tmp
+REQUIRED_FILES="readme.txt team.txt create.sql load.sql queries.sql query.php violate.sql"
 
 # usage
 if [ $# -ne 1 ]
@@ -9,7 +9,7 @@ then
      exit
 fi
 
-ZIP_FILE="P1A.zip"
+ZIP_FILE="P1B.zip"
 FOLDER_NAME=$1
 
 # clean any existing files
@@ -18,7 +18,7 @@ mkdir ${TMP_DIR}
 
 # unzip the submission zip file 
 if [ ! -f ${ZIP_FILE} ]; then
-    echo "ERROR: Cannot find ${ZIP_FILE}, ensure this script is put in the same directory of your ${ZIP_FILE} file. Otherwise check the zip file name" 1>&2
+    echo "ERROR: Cannot find $ZIP_FILE, ensure this script is put in the same directory of your P1B.zip file. Otherwise check the zip file name" 1>&2
     rm -rf ${TMP_DIR}
     echo "rmd"
     exit 1
@@ -52,6 +52,6 @@ do
     fi
 done
 
-echo "Check File Successfully. Please upload your ${ZIP_FILE} file to CCLE."
+echo "Check File Successfully. Please upload your P1B.zip file to CCLE."
 rm -rf ${TMP_DIR}
 exit 0
