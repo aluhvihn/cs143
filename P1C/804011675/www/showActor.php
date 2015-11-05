@@ -47,7 +47,7 @@
                         echo "" . date("F d, Y", strtotime($a_row[4]));
                     }
                     else {
-                        echo "N/A";
+                        echo "N/A (Still Alive)";
                     }
 
                     # Get movies actor was in from movie_result

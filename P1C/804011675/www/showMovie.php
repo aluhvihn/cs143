@@ -82,7 +82,7 @@
                     echo "</br></br>";
                     echo "<strong>Cast of \"" . $m_row[0] . "\" (" . $m_row[1] . "):</strong>";
                     # Link to add Actor info
-                    echo "&nbsp;&nbsp;<small><a href = './addMovieActor.php' style='text-decoration: none'>&lt; Add an actor for this movie &gt;</a></small></br>";
+                    echo "&nbsp;&nbsp;<small><a href = './addMovieActor.php?id=" . $_GET["mid"] . "' style='text-decoration: none'>&lt; Add an actor for this movie &gt;</a></small></br>";
                     if (mysql_num_rows($actor_result) == 0) {
                         echo "No record of actors in this movie.</br>";
                     }
@@ -101,7 +101,7 @@
                     echo "</br>";
                     echo "<strong>Reviews:</strong>";
                     # Link to add Review
-                    echo "&nbsp;&nbsp;<small><a href = './addComments.php' style='text-decoration: none'>&lt; Add a comment for this movie &gt;</a></small></br>";
+                    echo "&nbsp;&nbsp;<small><a href = './addComments.php?id=" . $_GET["mid"] . "' style='text-decoration: none'>&lt; Add a comment for this movie &gt;</a></small></br>";
                     if (mysql_num_rows($review_result) == 0) {
                         echo "No reviews have been made for this movie yet.</br>";
                     }

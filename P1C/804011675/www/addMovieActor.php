@@ -25,7 +25,7 @@
         //select ALL movie IDs, titles, years --> dropdown option
         $allMovies = mysql_query( "SELECT id, title, year FROM Movie ORDER BY title", $db_connection ) or die( mysql_error() );
         
-        //first (default) option is blank
+        // first (default) option is blank
         $selectedMovie.="<option value=\"\"></option>";
         
         //fetch the array from query
