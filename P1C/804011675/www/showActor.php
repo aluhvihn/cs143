@@ -23,9 +23,11 @@
 
                 $actor_query = "SELECT last, first, sex, dob, dod FROM Actor WHERE id=" . $_GET["aid"];
                 $acting_background = "SELECT mid, role, title, year FROM MovieActor A, Movie M WHERE A.aid=" . $_GET["aid"] . " AND A.mid = M.id ORDER BY year";
+                $directing_background = "SELECT mid, title, year FROM MovieDirector D, Movie M WHERE D.did=" . $_GET["aid"] . " AND D.mid = M.id ORDER BY year";
 
                 $actor_result = mysql_query( $actor_query );
                 $movie_result = mysql_query( $acting_background );
+                $directing_result = mysql_query( $directing_background );
 
                 # If no matching row (tuple) from database
                 if (mysql_num_rows($actor_result) == 0) {
@@ -35,14 +37,14 @@
                     # Retrieving results
                     
                     # Get actor information from actor_result
-                    $row = mysql_fetch_row($actor_result);
+                    $a_row = mysql_fetch_row($actor_result);
                     echo "<h1><u>Actor Information</u></h1>";
-                    echo "<h2>" . $row[1] . " " . $row[0] . "</h2>";
-                    echo "<strong>Sex:</strong> " . $row[2] . "</br>";
-                    echo "<strong>Date of Birth:</strong> " . date("F d, Y", strtotime($row[3])) . "</br>";
+                    echo "<h2>" . $a_row[1] . " " . $a_row[0] . "</h2>";
+                    echo "<strong>Sex:</strong> " . $a_row[2] . "</br>";
+                    echo "<strong>Date of Birth:</strong> " . date("F d, Y", strtotime($a_row[3])) . "</br>";
                     echo "<strong>Date of Death:</strong> ";
-                    if ($row[4]) {  //If there is a "Date of Death"
-                        echo "" . date("F d, Y", strtotime($row[4]));
+                    if ($a_row[4]) {  //If there is a "Date of Death"
+                        echo "" . date("F d, Y", strtotime($a_row[4]));
                     }
                     else {
                         echo "N/A";
@@ -50,21 +52,42 @@
 
                     # Get movies actor was in from movie_result
                     echo "</br></br>";
-                    echo "<strong>Movies starring " . $row[1] . " " . $row[0] . ":</strong></br>";
+                    echo "<strong>Movies starring " . $a_row[1] . " " . $a_row[0] . ":</strong>";
+                    # Link to add movie roles
+                    echo "&nbsp;&nbsp;<small><a href = './addMovieActor.php' style='text-decoration: none'>&lt; Add a movie role for this actor &gt;</a></small></br>";
 
                     if (mysql_num_rows($movie_result) == 0) {
                         echo "No record of movie roles for this actor.</br>";
                     }
                     else {
-                        while($row = mysql_fetch_row($movie_result)) {
-                            echo "<a href = './showMovie.php?mid=" . $row[0] . "'>";
-                            echo "" . $row[2] . " (" . $row[3] . ")</a>";
-                            echo "&nbsp;&nbsp;<em>Role:</em> \"" . $row[1];
+                        echo "<div style=\"border:1px solid;width:800px;height:20%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
+                        while($m_row = mysql_fetch_row($movie_result)) {
+                            echo "<a href = './showMovie.php?mid=" . $m_row[0] . "'>";
+                            echo "" . $m_row[2] . " (" . $m_row[3] . ")</a>";
+                            echo "&nbsp;&nbsp;<em>Role:</em> \"" . $m_row[1];
                             echo "\"</br>";
                         }
+                        echo "</p></div>";
                     }
 
-                    echo "</br><small><a href = './addMovieActor.php' style='text-decoration: none'>&lt; Add a movie role for this actor &gt;</a></small>";
+                    # Get movies person directed
+                    echo "</br></br>";
+                    echo "<strong>Movies directed by " . $a_row[1] . " " . $a_row[0] . ":</strong>";
+                    # Link to add movie roles
+                    echo "&nbsp;&nbsp;<small><a href = './addMovieDirector.php' style='text-decoration: none'>&lt; Add a movie directed by this person &gt;</a></small></br>";
+
+                    if (mysql_num_rows($directing_result) == 0) {
+                        echo "No record of movies directed by this person.</br>";
+                    }
+                    else {
+                        echo "<div style=\"border:1px solid;width:800px;height:20%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
+                        while($d_row = mysql_fetch_row($directing_result)) {
+                            echo "<a href = './showMovie.php?mid=" . $d_row[0] . "'>";
+                            echo "" . $d_row[1] . " (" . $d_row[2] . ")</a></br>";
+                            echo "";
+                        }
+                        echo "</p></div>";
+                    }
                 }
                 echo "</br><hr>";
                 # Closing connection
@@ -97,7 +120,7 @@
                 if ($result && mysql_num_rows($result)>0){
                     echo "<h3>Results: </h3><p>";
                     
-                    echo "<div style=\"border:1px solid;width:500px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
+                    echo "<div style=\"border:1px solid;width:800px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
 
                     while($row = mysql_fetch_row($result)){
                         echo "<a href = './showActor.php?aid=$row[2]'>";
@@ -138,7 +161,7 @@
                     echo "<h3>Results: </h3><p>";
                     
                     // bordered box to display results (so it doesn't get ugly)
-                    echo "<div style=\"border:1px solid;width:500px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
+                    echo "<div style=\"border:1px solid;width:800px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
 
                     while($row = mysql_fetch_row($result)){
                         echo "<a href = './showActor.php?aid=$row[2]'>";

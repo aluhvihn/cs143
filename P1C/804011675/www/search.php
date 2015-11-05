@@ -60,7 +60,7 @@
                 }
                 else {
                     #retrieving results
-                    echo "<div style=\"border:1px solid;width:500px;height:30%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
+                    echo "<div style=\"border:1px solid;width:800px;height:30%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
                     while ($row = mysql_fetch_row($actor_result)) {
                         echo "<a href = './showActor.php?aid=$row[0]'>";
                         echo "" . $row[2] . ", " . $row[1];
@@ -76,7 +76,7 @@
                 }
                 else {
                     #retrieving results
-                    echo "<div style=\"border:1px solid;width:500px;height:30%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
+                    echo "<div style=\"border:1px solid;width:800px;height:30%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
                     while ($row = mysql_fetch_row($movie_result)) {
                         echo "<a href = './showMovie.php?mid=$row[0]'>";
                         echo "" . $row[1] . " (" . $row[2] . ")";
