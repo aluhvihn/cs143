@@ -99,7 +99,11 @@
         $newMaxID = $curMaxID + 1;
 
         //pass in user inputs
-		if( $title=="" )
+		if( $title=="" && $year=="" && $rating=="" && $company=="" && $genre=="" )	// ALL FIELDS EMPTY
+		{
+			//do nothing; page loaded or no insert attempt made
+		}
+		else if( $title=="" )
 		{
 			echo "Must enter a movie title.";
 		}
@@ -110,10 +114,6 @@
 		else if( $company=="" )
 		{
 			echo "Must enter a production company.";
-		}
-		else if( $title=="" && $year=="" && $rating=="" && $company=="" && $genre=="" )
-		{
-			//do nothing; page loaded or no insert attempt made
 		}
 		else 	//all input validated; process the query
 		{

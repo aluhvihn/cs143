@@ -4,7 +4,6 @@
     </head>
 
     <body style="background-color:#AAE3FF;font-family:Arial;">
-        <h1>Movie Information:</h1>
 
         <?php
             if($_GET["mid"]){
@@ -86,18 +85,15 @@
 
                 $query = "SELECT title, id FROM Movie WHERE title LIKE '" . $_GET["title"] . "%' ORDER BY title";
 
-                echo "<h2>Movies starting with letter <u>" . $_GET["title"] . "</u></h2>";
+                echo "<h2>Movies titles starting with the letter '" . $_GET["title"] . "'</h2>";
                 $result = mysql_query($query, $db_connection);
                 
                 if ($result && mysql_num_rows($result)>0){
                     echo "<h3>Results: </h3><p>";
                     
-                    // bordered box to display results (so it doesn't get ugly)
-                    echo "<div style=\"border:1px solid #8D6932;width:500px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left\" ><p>";
+                    echo "<div style=\"border:1px solid;width:500px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
 
                     while($row = mysql_fetch_row($result)){
-                        echo "&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp";
-
                         echo "<a href = './showMovie.php?mid=$row[1]'>";
                         echo "" . $row[0];
                         echo "</a><br/>";

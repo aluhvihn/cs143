@@ -36,12 +36,19 @@
                 <a href=./addMovieInfo.php target=main>Add Movie Information</a>
             </li>
             <li>
-                <a href=./addMovieActor.php target=main>Add Movie/Actor Relation</a>
+                <a href=./addMovieActor.php target=main>Add an Actor to a Movie</a>
             </li>
             <li>
-                <a href=./addMovieDirector.php target=main>Add Movie/Director</a>
+                <a href=./addMovieDirector.php target=main>Add a Director to a Movie</a>
             </li>
         </ul>
 
+        <hr>
+
+        <form action="./search.php" method="GET" target=main>
+            <input type="text" name="input">
+            <br><br>
+            <input type="submit" value="Search Movie/Actor">
+        </form>
     </body>
 </html>

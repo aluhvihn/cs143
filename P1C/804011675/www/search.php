@@ -34,8 +34,8 @@
                 $keywords = explode(" ", $_GET["input"]);
                 $num_keywords = count($keywords);
 
-                $actor_query = "SELECT first, last, dob FROM Actor WHERE (first LIKE '%" . $keywords[0] . "%' OR last LIKE '%" . $keywords[0] . "%')";
-                $movie_query = "SELECT title, year FROM Movie WHERE (title LIKE '%" . $keywords[0] . "%')";
+                $actor_query = "SELECT id, first, last, dob FROM Actor WHERE (first LIKE '%" . $keywords[0] . "%' OR last LIKE '%" . $keywords[0] . "%')";
+                $movie_query = "SELECT id, title, year FROM Movie WHERE (title LIKE '%" . $keywords[0] . "%')";
 
                 # If there are multiple keywords
                 if ($num_keywords > 1) {
@@ -45,48 +45,31 @@
                         $movie_query = $movie_query . " AND (title LIKE '%" . $keywords[$i] . "%')";
                     }
                 }
+
+                # sort results
+                $actor_query = $actor_query . " ORDER BY last";
+                $movie_query = $movie_query . " ORDER BY title";
+
                 $actor_result = mysql_query( $actor_query );
                 $movie_result = mysql_query( $movie_query );
 
-                echo "<h3>Actor Results:</h3>";
+                echo "<h3>Actor Results (by Last Name):</h3>";
                 #if no matching row (tuple) from database
                 if (mysql_num_rows($actor_result) == 0) {
                     echo "No actors found";
                 }
                 else {
                     #retrieving results
-                    #creating table for query result
-                    echo "<table border=1><tr>";
-                    $f = 0;
-                    #get column information from query
-                    #return as object (name: column name)
-                    while ($f < mysql_num_fields($actor_result)) {
-                        $meta = mysql_fetch_field($actor_result, $f);
-                        echo "<td><strong>" . $meta->name . "</strong></td>";
-                        $f = $f + 1;
-                    }
-                    echo "<tr>";
-
-                    $r = 0;
-                    #get row information from query
-                    #returns numerical array of strings
+                    echo "<div style=\"border:1px solid;width:500px;height:30%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
                     while ($row = mysql_fetch_row($actor_result)) {
-                        for ($r = 0; $r < $f; $r++) {
-                            #if column is NULL, write N/A
-                            if ($row[$r] == NULL) {
-                                echo "<td>N/A</td>";
-                            }
-                            #otherwise, write fetched value of column from the row
-                            else {
-                                echo "<td>" . $row[$r] . "</td>";
-                            }
-                        }
-                        echo "</td><tr>";
+                        echo "<a href = './showActor.php?aid=$row[0]'>";
+                        echo "" . $row[2] . ", " . $row[1];
+                        echo "</a><br/>";
                     }
-                    echo "</tr></table>";
+                    echo "</p></div>";
                 }
 
-                echo "<h3>Movie Results:</h3>";
+                echo "<h3>Movie Results (by Title):</h3>";
                 #if no matching row (tuple) from database
                 if (mysql_num_rows($movie_result) == 0) {
                     echo "No movies found";
@@ -94,35 +77,13 @@
                 }
                 else {
                     #retrieving results
-                    #creating table for query result
-                    echo "<table border=1><tr>";
-                    $f = 0;
-                    #get column information from query
-                    #return as object (name: column name)
-                    while ($f < mysql_num_fields($movie_result)) {
-                        $meta = mysql_fetch_field($movie_result, $f);
-                        echo "<td><strong>" . $meta->name . "</strong></td>";
-                        $f = $f + 1;
-                    }
-                    echo "<tr>";
-
-                    $r = 0;
-                    #get row information from query
-                    #returns numerical array of strings
+                    echo "<div style=\"border:1px solid;width:500px;height:30%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
                     while ($row = mysql_fetch_row($movie_result)) {
-                        for ($r = 0; $r < $f; $r++) {
-                            #if column is NULL, write N/A
-                            if ($row[$r] == NULL) {
-                                echo "<td>N/A</td>";
-                            }
-                            #otherwise, write fetched value of column from the row
-                            else {
-                                echo "<td>" . $row[$r] . "</td>";
-                            }
-                        }
-                        echo "</td><tr>";
+                        echo "<a href = './showMovie.php?mid=$row[0]'>";
+                        echo "" . $row[1] . " (" . $row[2] . ")";
+                        echo "</a><br/>";
                     }
-                    echo "</tr></table>";
+                    echo "</p></div>";
                 }
 
                 #closing connection

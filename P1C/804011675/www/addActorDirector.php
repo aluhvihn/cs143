@@ -78,38 +78,43 @@
         $newMaxID = $curMaxID + 1;
 		
 		//pass in user inputs
-		if( $identity=="" )
-		{
-			echo "Must select an identity of person (Actor or Director) to add.";
-		}
-		else if( $fname=="" )
-		{
-			echo "Must enter a first name.";
-		}
-		else if( $lname=="" )
-		{
-			echo "Must enter a last name.";
-		}
-		else if(preg_match('/[^A-Za-z\s\'-]/', $fname) || preg_match('/[^A-Za-z\s\'-]/', $lname))
-		{
-			echo "Invalid name format: only letters, spaces, single quotes, and hyphens are allowed.";
-		}
-		else if( $identity=='Actor' && $sex=="" )
-		{
-			echo "Must select the Actor's sex.";
-		}
-		else if( $dob=="" || !checkdate($dobParsed["month"], $dobParsed["day"], $dobParsed["year"]) )
-		{
-			echo "Must enter a valid Date of Birth.";
-		}
-		else if( $dod!="" && !checkdate($dodParsed["month"], $dodParsed["day"], $dodParsed["year"]) )
-		{
-			echo "Must enter a valid Date of Death, if applicable.";
-		}
-		else if( $identity=="" && $fname=="" && $lname=="" && $sex=="" && $dob=="" && $dod=="" )
+
+    if( $identity=="" && $fname=="" && $lname=="" && $sex=="" && $dob=="" && $dod=="" )	// ALL FIELDS EMPTY
 		{
 			//do nothing; page loaded or no insert attempt made
 		}
+		else if( $identity=="" )
+		{
+			echo "<strong>Must select an identity of person (Actor or Director) to add.</strong>";
+		}
+		else if( $fname=="" )
+		{
+			echo "<strong>Must enter a first name.</strong>";
+		}
+		else if( $lname=="" )
+		{
+			echo "<strong>Must enter a last name.</strong>";
+		}
+		else if(preg_match('/[^A-Za-z\s\'-]/', $fname) || preg_match('/[^A-Za-z\s\'-]/', $lname))
+		{
+			echo "<strong>Invalid name format: only letters, spaces, single quotes, and hyphens are allowed.</strong>";
+		}
+		else if( $identity=='Actor' && $sex=="" )
+		{
+			echo "<strong>Must select the Actor's sex.</strong>";
+		}
+		else if( $dob=="" || !checkdate($dobParsed["month"], $dobParsed["day"], $dobParsed["year"]) )
+		{
+			echo "<strong>Must enter a valid Date of Birth.</strong>";
+		}
+		else if( $dod!="" && !checkdate($dodParsed["month"], $dodParsed["day"], $dodParsed["year"]) )
+		{
+			echo "<strong>Must enter a valid Date of Death, if applicable.</strong>";
+		}
+		// else if( $identity=="" && $fname=="" && $lname=="" && $sex=="" && $dob=="" && $dod=="" )
+		// {
+		// 	//do nothing; page loaded or no insert attempt made
+		// }
 		else 	//all input validated; process the query
 		{
 			//escape single quotes
