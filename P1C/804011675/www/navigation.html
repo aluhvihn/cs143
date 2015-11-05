@@ -3,17 +3,32 @@
         <title>Navigation</title>
     </head>
     
-    <!-- <body bgcolor="#FFCCCC"> -->
-    <!-- <body bgcolor="#FF9D9D"> -->
-    <body bgcolor="#FFFFCC">
-        <strong>Search:</strong>
-        <ul>
+    <!-- <body style="background-color:#FFCCCC"> -->
+    <!-- <body style="background-color:#FF9D9D"> -->
+    <body style="background-color:#FFFFCC;font-family:Arial;">
+        <p style="font-size:20px"><strong>Search:</strong></p>
+        <ul style="font-size:15px">
             <li>
-                <a href=./search.php target=main>Search for an Actor, Director, or Movie</a>
+                <a href=./search.php target=main>Search for an Actor, Actress, or Movie</a>
             </li>
         </ul>
-        <strong>Add New Content:</strong>
-        <ul>
+
+        <hr>
+
+        <p style="font-size:20px"><strong>Browse:</strong></p>
+        <ul style="font-size:15px">
+            <li>
+                <a href=./showActor.php target=main>Show Actor Information</a>
+            </li>
+            <li>
+                <a href=./showMovie.php target=main>Show Movie Information</a>
+            </li>
+        </ul>
+
+        <hr>
+
+        <p style="font-size:20px"><strong>Add:</strong></p>
+        <ul style="font-size:15px">
             <li>
                 <a href=./addActorDirector.php target=main>Add Actor/Director</a>
             </li>
@@ -27,14 +42,6 @@
                 <a href=./addMovieDirector.php target=main>Add Movie/Director</a>
             </li>
         </ul>
-        <strong>Browsing Content:</strong>
-        <ul>
-            <li>
-                <a href=./showActor.php target=main>Show Actor Information</a>
-            </li>
-            <li>
-                <a href=./showMovie.php target=main>Show Movie Information</a>
-            </li>
-        </ul>
+
     </body>
 </html>

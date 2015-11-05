@@ -5,6 +5,6 @@
     
     <frameset cols="200,*" border="0">
         <frame name="navi" src="./navigation.html"></frame>
-        <frame name="main" src="./test.html"></frame>
+        <frame name="main" src="./search.php"></frame>
     </frameset>
 </html>
