@@ -1,9 +1,9 @@
 <html>
     <head>
-        <title>Add Actor/ Director</title>
+        <title>Add Movie</title>
     </head>
 
-  	<body bgcolor="#AAE3FF">
+  	<body style="background-color:#AAE3FF;font-family:Arial;">
 		<h1>Add Movie</h1>
         <form action="./addMovieInfo.php" method="GET">
         	<table>
@@ -123,11 +123,11 @@
 
 			if( $rating != "" )
 			{
-				$query = "INSERT INTO Movie VALUES ('$newMaxID', '$titleParsed', '$year', '$rating', '$companyParsed')";
+				$query = "INSERT INTO Movie VALUES ( '$newMaxID', '$titleParsed', '$year', '$rating', '$companyParsed' )";
 			}
 			else
 			{
-				$query = "INSERT INTO Movie VALUES ('$newMaxID', '$titleParsed', '$year', NULL, '$companyParsed')";
+				$query = "INSERT INTO Movie VALUES ( '$newMaxID', '$titleParsed', '$year', NULL, '$companyParsed' )";
 			}
 
 			//update Movie & basic error handling

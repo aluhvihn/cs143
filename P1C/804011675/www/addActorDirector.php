@@ -3,7 +3,7 @@
         <title>Add Actor/Director</title>
     </head>
 
-  	<body bgcolor="#AAE3FF">
+  	<body style="background-color:#AAE3FF;font-family:Arial;">
 		<h1>Add Actor/Director</h1>
         <form action="./addActorDirector.php" method="GET">
         	<table>
@@ -78,8 +78,7 @@
         $newMaxID = $curMaxID + 1;
 		
 		//pass in user inputs
-
-    if( $identity=="" && $fname=="" && $lname=="" && $sex=="" && $dob=="" && $dod=="" )	// ALL FIELDS EMPTY
+	  if( $identity=="" && $fname=="" && $lname=="" && $sex=="" && $dob=="" && $dod=="" )	// ALL FIELDS EMPTY
 		{
 			//do nothing; page loaded or no insert attempt made
 		}
@@ -111,10 +110,6 @@
 		{
 			echo "<strong>Must enter a valid Date of Death, if applicable.</strong>";
 		}
-		// else if( $identity=="" && $fname=="" && $lname=="" && $sex=="" && $dob=="" && $dod=="" )
-		// {
-		// 	//do nothing; page loaded or no insert attempt made
-		// }
 		else 	//all input validated; process the query
 		{
 			//escape single quotes
@@ -145,7 +140,7 @@
 			//success message
 			echo "Add Sucess!";
 		}
-		
+	
 		//close database connection
 		mysql_close($db_connection);
 	?>
