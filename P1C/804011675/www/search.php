@@ -72,8 +72,7 @@
                 echo "<h3>Movie Results (by Title):</h3>";
                 #if no matching row (tuple) from database
                 if (mysql_num_rows($movie_result) == 0) {
-                    echo "No movies found";
-                    exit(1);
+                    echo "No movies found<br/>";
                 }
                 else {
                     #retrieving results
@@ -88,7 +87,7 @@
 
                 #closing connection
                 mysql_close($db_connection);
-                echo '<br>
+                echo '<hr><br/>
                 <form method="GET">
                     <!-- <textarea name="query" rows="8" cols="60"></textarea> -->
                     <input type="text" name="input" size="50" />

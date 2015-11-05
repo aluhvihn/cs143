@@ -21,47 +21,73 @@
                 #selecting database
                 mysql_select_db( "CS143", $db_connection );
 
-                $movie_query = "SELECT * FROM Movie WHERE id=" . $_GET["mid"];
+                $movie_query = "SELECT title, year, rating, company FROM Movie WHERE id=" . $_GET["mid"];
+                $actor_list = "SELECT id, last, first, role FROM MovieActor M, Actor A WHERE M.mid=" . $_GET["mid"] . " AND M.aid=A.id ORDER BY last";
+                $director_list = "SELECT last, first FROM MovieDirector M, Director D WHERE M.mid=" . $_GET["mid"] . " AND M.did=D.id ORDER BY last";
+                $genre_list = "SELECT genre FROM MovieGenre WHERE mid=" . $_GET["mid"] . " ORDER BY genre";
 
                 $movie_result = mysql_query( $movie_query );
+                $actor_result = mysql_query( $actor_list );
+                $director_result = mysql_query( $director_list );
+                $genre_result = mysql_query( $genre_list );
 
-                #if no matching row (tuple) from database
+                # If no matching row (tuple) from database
                 if (mysql_num_rows($movie_result) == 0) {
                     echo "No movie found";
                 }
                 else {
-                    #retrieving results
-                    #creating table for query result
-                    echo "<table border=1><tr>";
-                    $f = 0;
-                    #get column information from query
-                    #return as object (name: column name)
-                    while ($f < mysql_num_fields($movie_result)) {
-                        $meta = mysql_fetch_field($movie_result, $f);
-                        echo "<td><strong>" . $meta->name . "</strong></td>";
-                        $f = $f + 1;
+                    # Retrieving results
+                    
+                    # Get Movie information from movie_result
+                    $m_row = mysql_fetch_row($movie_result);
+                    echo "<h1><u>Movie Information</u></h1>";
+                    echo "<h2>" . $m_row[0] . " (" . $m_row[1] . ")</h2>";
+                    echo "<strong>Producer:</strong> " . $m_row[3] . "</br>";
+                    echo "<strong>MPAA Rating:</strong> " . $m_row[2] . "</br>";
+                    
+                    echo "<strong>Director(s):</strong> ";
+                    if (mysql_num_rows($director_result) == 0) {
+                        echo "N/A";
                     }
-                    echo "<tr>";
-
-                    $r = 0;
-                    #get row information from query
-                    #returns numerical array of strings
-                    while ($row = mysql_fetch_row($movie_result)) {
-                        for ($r = 0; $r < $f; $r++) {
-                            #if column is NULL, write N/A
-                            if ($row[$r] == NULL) {
-                                echo "<td>N/A</td>";
-                            }
-                            #otherwise, write fetched value of column from the row
-                            else {
-                                echo "<td>" . $row[$r] . "</td>";
-                            }
+                    else {
+                        $d_row = mysql_fetch_row($director_result);
+                        echo $d_row[1] . " " . $d_row[0];
+                        while($d_row = mysql_fetch_row($director_result)) {
+                            echo ", " . $d_row[1] . " " . $d_row[0];
                         }
-                        echo "</td><tr>";
                     }
-                    echo "</tr></table>";
-                }
+                    echo "<small><a href = './addMovieDirector.php' style='text-decoration: none'>&nbsp;&nbsp;&lt; Add a director for this movie &gt;</a></small></br>";
+                    
+                    echo "<strong>Genre:</strong> ";
+                    if (mysql_num_rows($genre_result) == 0) {
+                        echo "N/A";
+                    }
+                    else {
+                        $g_row = mysql_fetch_row($genre_result);
+                        echo $g_row[1] . " " . $g_row[0];
+                        while($g_row = mysql_fetch_row($genre_result)) {
+                            echo ", " . $g_row[1] . " " . $g_row[0];
+                        }
+                    }
+                    echo "</br>";
 
+                    # Get actors who acted in this movie
+                    echo "</br></br>";
+                    echo "<strong>Cast of \"" . $m_row[0] . "\" (" . $m_row[1] . "):</strong></br>";
+                    if (mysql_num_rows($actor_result) == 0) {
+                        echo "No record of actors in this movie.</br>";
+                    }
+                    else {
+                        while($a_row = mysql_fetch_row($actor_result)) {
+                            echo "<a href = './showActor.php?aid=" . $a_row[0] . "'>";
+                            echo "" . $a_row[2] . " " . $a_row[1] . "</a>";
+                            echo "&nbsp;&nbsp;As \"" . $a_row[3];
+                            echo "\"</br>";
+                        }
+                    }
+                    echo "</br><small><a href = './addMovieActor.php' style='text-decoration: none'>&nbsp;&nbsp;&lt; Add an actor for this movie &gt;</a></small></br>";
+                }
+                echo "</br><hr>";
                 #closing connection
                 mysql_close($db_connection);
             }
@@ -93,9 +119,9 @@
                     
                     echo "<div style=\"border:1px solid;width:500px;height:60%;overflow:auto;overflow-y:scroll;overflow-x:hidden;text-align:left;padding-left:2em;\" ><p>";
 
-                    while($row = mysql_fetch_row($result)){
-                        echo "<a href = './showMovie.php?mid=$row[1]'>";
-                        echo "" . $row[0];
+                    while($m_row = mysql_fetch_row($result)){
+                        echo "<a href = './showMovie.php?mid=$m_row[1]'>";
+                        echo "" . $m_row[0];
                         echo "</a><br/>";
                     }
                     echo "</p></div>";

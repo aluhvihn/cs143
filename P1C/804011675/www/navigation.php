@@ -6,6 +6,9 @@
     <!-- <body style="background-color:#FFCCCC"> -->
     <!-- <body style="background-color:#FF9D9D"> -->
     <body style="background-color:#FFFFCC;font-family:Arial;">
+        <h1>BruinDB</h1>
+        <hr align="center" noshade="noshade" size="2" width="100%" color="#AAE3FF">
+
         <p style="font-size:20px"><strong>Search:</strong></p>
         <ul style="font-size:15px">
             <li>
@@ -13,7 +16,7 @@
             </li>
         </ul>
 
-        <hr>
+        <hr align="center" noshade="noshade" size="2" width="80%" color="#AAE3FF">
 
         <p style="font-size:20px"><strong>Browse:</strong></p>
         <ul style="font-size:15px">
@@ -25,7 +28,7 @@
             </li>
         </ul>
 
-        <hr>
+        <hr align="center" noshade="noshade" size="2" width="80%" color="#AAE3FF">
 
         <p style="font-size:20px"><strong>Add:</strong></p>
         <ul style="font-size:15px">
@@ -43,7 +46,7 @@
             </li>
         </ul>
 
-        <hr>
+        <hr align="center" noshade="noshade" size="2" width="100%" color="#AAE3FF">
 
         <form action="./search.php" method="GET" target=main>
             <input type="text" name="input">

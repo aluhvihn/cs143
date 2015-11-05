@@ -27,48 +27,47 @@
                 $actor_result = mysql_query( $actor_query );
                 $movie_result = mysql_query( $acting_background );
 
-                #if no matching row (tuple) from database
+                # If no matching row (tuple) from database
                 if (mysql_num_rows($actor_result) == 0) {
                     echo "No actor found";
                 }
                 else {
-                    # retrieving results
+                    # Retrieving results
                     
-                    # get actor information from actor_result
+                    # Get actor information from actor_result
                     $row = mysql_fetch_row($actor_result);
+                    echo "<h1><u>Actor Information</u></h1>";
                     echo "<h2>" . $row[1] . " " . $row[0] . "</h2>";
                     echo "<strong>Sex:</strong> " . $row[2] . "</br>";
                     echo "<strong>Date of Birth:</strong> " . date("F d, Y", strtotime($row[3])) . "</br>";
                     echo "<strong>Date of Death:</strong> ";
-                    if ($row[4]) {  // if there is a "Date of Death"
-                        echo "" . date("F d, Y", strtotime($row[4])) . "</br>";
+                    if ($row[4]) {  //If there is a "Date of Death"
+                        echo "" . date("F d, Y", strtotime($row[4]));
                     }
                     else {
                         echo "N/A";
                     }
 
-                    # get movies actor was in from movie_result
+                    # Get movies actor was in from movie_result
                     echo "</br></br>";
                     echo "<strong>Movies starring " . $row[1] . " " . $row[0] . ":</strong></br>";
 
                     if (mysql_num_rows($movie_result) == 0) {
-                        echo "No record of movie roles for this actor!";
+                        echo "No record of movie roles for this actor.</br>";
                     }
                     else {
                         while($row = mysql_fetch_row($movie_result)) {
                             echo "<a href = './showMovie.php?mid=" . $row[0] . "'>";
                             echo "" . $row[2] . " (" . $row[3] . ")</a>";
-                            echo "&nbsp;&nbsp;<em>Role:</em> " . $row[1];
-                            echo "</br>";
+                            echo "&nbsp;&nbsp;<em>Role:</em> \"" . $row[1];
+                            echo "\"</br>";
                         }
                     }
 
-                    echo "</br>";
-                    echo "<a href = './addMovieActor.php' style='text-decoration: none'>&lt; Add a movie role for this actor &gt;</a>";
-                    echo "</br><hr>";
+                    echo "</br><small><a href = './addMovieActor.php' style='text-decoration: none'>&lt; Add a movie role for this actor &gt;</a></small>";
                 }
-
-                #closing connection
+                echo "</br><hr>";
+                # Closing connection
                 mysql_close($db_connection);
             }
         ?>
