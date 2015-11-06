@@ -114,7 +114,7 @@
             mysql_query( $query, $db_connection ) or die( mysql_error() );
             
             //success message
-            echo "Add Sucess!";
+            echo "Add Success!";
         }
         
         //close the database connection

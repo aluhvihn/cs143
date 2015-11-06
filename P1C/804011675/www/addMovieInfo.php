@@ -144,7 +144,7 @@
 			mysql_query( "UPDATE MaxMovieID SET id=$newMaxID WHERE id=$curMaxID", $db_connection ) or die( mysql_error() );
 
 			//success message
-			echo "Add Sucess!";
+			echo "Add Success!";
 		}
 		
 		//close database connection

@@ -23,7 +23,7 @@
 
                 $movie_query = "SELECT title, year, rating, company FROM Movie WHERE id=" . $_GET["mid"];
                 $actor_list = "SELECT id, last, first, role FROM MovieActor M, Actor A WHERE M.mid=" . $_GET["mid"] . " AND M.aid=A.id ORDER BY last";
-                $director_list = "SELECT last, first FROM MovieDirector M, Director D WHERE M.mid=" . $_GET["mid"] . " AND M.did=D.id ORDER BY last";
+                $director_list = "SELECT last, first, id FROM MovieDirector M, Director D WHERE M.mid=" . $_GET["mid"] . " AND M.did=D.id ORDER BY last";
                 $genre_list = "SELECT genre FROM MovieGenre WHERE mid=" . $_GET["mid"] . " ORDER BY genre";
                 $review_list = "SELECT name, time, rating, comment FROM Review WHERE mid=" . $_GET["mid"] . " ORDER BY time";
                 $avg_review = "SELECT AVG(rating) FROM Review WHERE mid=" . $_GET["mid"];
@@ -58,13 +58,15 @@
                     }
                     else {
                         $d_row = mysql_fetch_row($director_result);
-                        echo $d_row[1] . " " . $d_row[0];
+                        echo "<a href = './showActor.php?aid=" . $d_row[2] . "'>";
+                        echo $d_row[1] . " " . $d_row[0] . "</a>";
                         while($d_row = mysql_fetch_row($director_result)) {
-                            echo ", " . $d_row[1] . " " . $d_row[0];
+                            echo ", <a href = './showActor.php?aid=" . $d_row[2] . "'>";
+                            echo "" . $d_row[1] . " " . $d_row[0] . "</a>";
                         }
                     }
                     # Link to add Director info
-                    echo "<small>&nbsp;&nbsp;<a href = './addMovieDirector.php' style='text-decoration: none'>&lt; Add a director for this movie &gt;</a></small></br>";
+                    echo "<small>&nbsp;&nbsp;<a href = './addMovieDirector.php?id=" . $_GET["mid"] . "' style='text-decoration: none'>&lt; Add a director for this movie &gt;</a></small></br>";
                     
                     echo "<strong>Genre:</strong> ";
                     if (mysql_num_rows($genre_result) == 0) {
