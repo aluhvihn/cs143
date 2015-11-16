@@ -308,7 +308,7 @@ int BTNonLeafNode::getKeyCount()
 	int maxIndex = PageFile::PAGE_SIZE;
 	int count = 0;
 	int i, curKey;
-	char* temp = buffer + 8;	//skip first PageID (8 bytes)
+	char* temp = buffer + 8;	//skip first PageId (8 bytes)
 
 	for(i = 8; i < maxIndex; i += pairSize)
 	{
@@ -334,7 +334,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
 	int maxIndex = PageFile::PAGE_SIZE;
 	int i, curKey;
-	char* temp = buffer + 8;	//skip first PageID (8 bytes)
+	char* temp = buffer + 8;	//skip first PageId (8 bytes)
 	
 	if (getKeyCount() >= maxEntry)
 	{
@@ -453,7 +453,33 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int i, curKey;
+	char* temp = buffer + 8;	//skip first PageId (8 bytes)
+
+	for(i = 8; i < getKeyCount() * pairSize + 8; i += pairSize)
+	{
+		memcpy(&curKey, temp, sizeof(int));
+
+		if(curKey > searchKey)
+		{
+			memcpy(&pid, temp - 4, sizeof(PageId));	//pid from smaller side of curKey
+			return 0;
+		}
+		else if(curKey > searchKey && i == 8)
+		{
+			memcpy(&pid, buffer, sizeof(PageId));	//initial PageId
+			return 0;
+		}
+
+		temp += pairSize;
+	}
+
+	memcpy(&pid, temp - 4, sizeof(PageId));
+
+	return 0;
+}
 
 /*
  * Initialize the root node with (pid1, key, pid2).
@@ -463,4 +489,18 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
-{ return 0; }
+{
+	RC check;
+	char* temp = buffer;
+
+	memset(buffer, 0, PageFile::PAGE_SIZE);
+
+	memcpy(temp, &pid1, sizeof(PageId));	//copy first PageId
+
+	if( (check = insert(key, pid2)) != 0)	//copy first pair
+	{
+		return check;
+	}
+
+	return 0;
+}
