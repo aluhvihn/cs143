@@ -464,12 +464,12 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 
 		if(curKey > searchKey)
 		{
+			if (i == 8)
+			{
+				memcpy(&pid, buffer, sizeof(PageId));	//initial PageId
+				return 0;
+			}
 			memcpy(&pid, temp - 4, sizeof(PageId));	//pid from smaller side of curKey
-			return 0;
-		}
-		else if(curKey > searchKey && i == 8)
-		{
-			memcpy(&pid, buffer, sizeof(PageId));	//initial PageId
 			return 0;
 		}
 
