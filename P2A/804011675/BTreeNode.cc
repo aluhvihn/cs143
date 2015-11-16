@@ -2,6 +2,14 @@
 
 using namespace std;
 
+/* Leaf node constructor */
+BTLeafNode::BTLeafNode()
+{
+	//set buffer (1024 byte array) initially to 0
+	memset(buffer,0,PageFile::PAGE_SIZE);
+	keyCount = 0;
+}
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -9,7 +17,9 @@ using namespace std;
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{
+	return pf.read(pid, buffer);
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
@@ -18,14 +28,33 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
-{ return 0; }
+{ 
+	return pf.write(pid, buffer);
+}
 
 /*
  * Return the number of keys stored in the node.
  * @return the number of keys in the node
  */
 int BTLeafNode::getKeyCount()
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);	//last 4 bytes = PageId to next leaf node
+	int count = 0;
+	int i, curKey;
+	char* temp = buffer;
+
+	for(i = 0; i < maxIndex; i += pairSize)
+	{
+		memcpy(&curKey, temp, sizeof(int)); 
+		if(curKey == 0)
+			break;
+		count++;
+		
+		temp += pairSize;
+	}
+	return count;
+}
 
 /*
  * Insert a (key, rid) pair to the node.
@@ -34,7 +63,49 @@ int BTLeafNode::getKeyCount()
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTLeafNode::insert(int key, const RecordId& rid)
-{ return 0; }
+{
+	PageId nextNodePtr = getNextNodePtr();	//last 4 bytes for inserted leaf reconstruction
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
+	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);
+	int i, curKey;
+	char* temp = buffer;
+ 
+	if (getKeyCount() >= maxEntry)
+	{
+		return RC_NODE_FULL;
+	}
+
+	for(i = 0; i < maxIndex; i += pairSize)
+	{
+		memcpy(&curKey, temp, sizeof(int)); 
+		if( (key < curKey) || (curKey == 0) )
+			break;
+		
+		temp += pairSize;
+	}
+
+	char* newBuffer = (char*)malloc(PageFile::PAGE_SIZE);
+	memset(newBuffer, 0, PageFile::PAGE_SIZE);
+
+	memcpy(newBuffer, buffer, i);	//copy values upto i
+
+	PageId pid = rid.pid;	//values of new pair (to be inserted)
+	int sid = rid.sid;
+
+	memcpy(newBuffer + i, &key, sizeof(int));
+	memcpy(newBuffer + i + sizeof(int), &rid, sizeof(RecordId));
+
+	memcpy(newBuffer + i + pairSize, buffer + i, getKeyCount() * pairSize - i);	//copy rest of values
+	memcpy(newBuffer + maxIndex, &nextNodePtr, sizeof(PageId));
+
+	memcpy(buffer, newBuffer, PageFile::PAGE_SIZE);	//copy and free newBuffer
+	free(newBuffer);
+
+	keyCount++;	//insert success; increment key count
+
+	return 0;
+}
 
 /*
  * Insert the (key, rid) pair to the node
@@ -48,7 +119,65 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
  */
 RC BTLeafNode::insertAndSplit(int key, const RecordId& rid, 
                               BTLeafNode& sibling, int& siblingKey)
-{ return 0; }
+{
+	PageId nextNodePtr = getNextNodePtr();	//last 4 bytes for inserted leaf reconstruction
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
+	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);
+
+	if(getKeyCount() < maxEntry)
+	{
+		return RC_INVALID_FILE_FORMAT;
+	}	
+
+	memset(sibling.buffer, 0, PageFile::PAGE_SIZE);
+
+	int halfKeyCount = ( (int)((getKeyCount()+1)/2) );	//keys to remain in 1st half
+	int splitIndex = halfKeyCount * pairSize;	//index to split
+	
+	memcpy(sibling.buffer, buffer + splitIndex, maxIndex - splitIndex);	//copy right half from split
+
+	sibling.keyCount = getKeyCount() - halfKeyCount;	//sibling's key count
+	sibling.setNextNodePtr(getNextNodePtr());	//current node's pointer
+
+	memset(buffer + splitIndex, 0, maxIndex - splitIndex);	//2nd half
+	keyCount = halfKeyCount;
+
+	int firstHalfKey;
+	memcpy(&firstHalfKey, sibling.buffer, sizeof(int));
+
+	if(key < firstHalfKey)	//insert pair
+	{
+		insert(key, rid);
+	}
+	else
+	{
+		sibling.insert(key,rid);
+	}
+
+	//Check which buffer to insert new (key, rid) into
+	int firstHalfKey;
+	memcpy(&firstHalfKey, sibling.buffer, sizeof(int));
+	
+	//Insert pair and increment number of keys
+	if(key>=firstHalfKey) //If our key belongs in the second buffer (since it's sorted)...
+	{
+		sibling.insert(key, rid);
+	}
+	else //Otherwise, place it in the first half
+	{
+		insert(key, rid);
+	}
+	
+	memcpy(&siblingKey, sibling.buffer, sizeof(int));	//copy sibling first key & rid
+	
+	RecordId siblingRid;
+	siblingRid.pid = -1;
+	siblingRid.sid = -1;
+	memcpy(&siblingRid, sibling.buffer + sizeof(int), sizeof(RecordId));
+	
+	return 0;
+}
 
 /**
  * If searchKey exists in the node, set eid to the index entry
@@ -62,7 +191,26 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
  * @return 0 if searchKey is found. Otherwise return an error code.
  */
 RC BTLeafNode::locate(int searchKey, int& eid)
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int i, curKey;
+	char* temp = buffer;
+
+	for(i = 0; i < getKeyCount() * pairSize; i++)
+	{
+		memcpy(&curKey, temp, sizeof(int));
+
+		if(curKey >= searchKey)
+		{
+			eid = i;
+			return 0;
+		}
+
+		temp += pairSize;
+	}
+
+	return RC_NO_SUCH_RECORD;
+}
 
 /*
  * Read the (key, rid) pair from the eid entry.
@@ -72,14 +220,36 @@ RC BTLeafNode::locate(int searchKey, int& eid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int entryPos = eid * pairSize;
+	char* temp = buffer;
+
+	if (eid < 0 || eid >= getKeyCount())
+	{
+		return RC_INVALID_CURSOR;
+	}
+
+	memcpy(&key, temp + entryPos, sizeof(int));
+	memcpy(&rid, temp + entryPos + sizeof(int), sizeof(RecordId));
+	
+	return 0;
+}
 
 /*
  * Return the pid of the next slibling node.
  * @return the PageId of the next sibling node 
  */
 PageId BTLeafNode::getNextNodePtr()
-{ return 0; }
+{
+	PageId pid = 0;	//assume no next node
+	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);
+	char* temp = buffer;
+
+	memcpy(&pid, temp + maxIndex, sizeof(PageId));	//last PageID of buffer
+	
+	return pid;
+}
 
 /*
  * Set the pid of the next slibling node.
@@ -87,7 +257,24 @@ PageId BTLeafNode::getNextNodePtr()
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::setNextNodePtr(PageId pid)
-{ return 0; }
+{
+	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);
+	char* temp = buffer;
+	
+	memcpy(temp + maxIndex, &pid, sizeof(PageId));	//copy pid
+	
+	return 0;
+}
+
+/* ===================== NON LEAF ===================== */
+
+/* Nonleaf node constructor */
+BTNonLeafNode::BTNonLeafNode()
+{
+	//set buffer (1024 byte array) initially to 0
+	memset(buffer,0,PageFile::PAGE_SIZE);
+	keyCount = 0;
+}
 
 /*
  * Read the content of the node from the page pid in the PageFile pf.
@@ -96,7 +283,9 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{
+	return pf.read(pid, buffer);
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
@@ -105,15 +294,33 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::write(PageId pid, PageFile& pf)
-{ return 0; }
+{ 
+	return pf.write(pid, buffer);
+}
 
 /*
  * Return the number of keys stored in the node.
  * @return the number of keys in the node
  */
 int BTNonLeafNode::getKeyCount()
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int maxIndex = PageFile::PAGE_SIZE;
+	int count = 0;
+	int i, curKey;
+	char* temp = buffer + 8;	//skip first PageID (8 bytes)
 
+	for(i = 8; i < maxIndex; i += pairSize)
+	{
+		memcpy(&curKey, temp, sizeof(int));
+		if(curKey == 0)
+			break;
+		count++;
+
+		temp += pairSize;
+	}
+	return count;
+}
 
 /*
  * Insert a (key, pid) pair to the node.
@@ -122,7 +329,44 @@ int BTNonLeafNode::getKeyCount()
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
+	int maxIndex = PageFile::PAGE_SIZE;
+	int i, curKey;
+	char* temp = buffer + 8;	//skip first PageID (8 bytes)
+	
+	if (getKeyCount() >= maxEntry)
+	{
+		return RC_NODE_FULL;
+	}
+
+	for(i = 8; i < maxIndex; i += pairSize)
+	{
+		memcpy(&curKey, temp, sizeof(int));
+		if( (key < curKey) || (curKey == 0) )
+			break;
+
+		temp += pairSize;
+	}
+
+	char* newBuffer = (char*)malloc(PageFile::PAGE_SIZE);
+	memset(newBuffer, 0, PageFile::PAGE_SIZE);
+
+	memcpy(newBuffer, buffer, i);	//copy values upto i
+
+	memcpy(newBuffer + i, &key, sizeof(int));
+	memcpy(newBuffer + i + sizeof(int), &pid, sizeof(PageId));
+
+	memcpy(newBuffer + i + pairSize, buffer + i, getKeyCount() * pairSize - i + 8);	//copy rest of values
+	
+	memcpy(buffer, newBuffer, PageFile::PAGE_SIZE);	//copy and free newBuffer
+	free(newBuffer);
+	
+	keyCount++;	//insert success; increment key count
+
+	return 0;
+}
 
 /*
  * Insert the (key, pid) pair to the node
@@ -135,7 +379,71 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
-{ return 0; }
+{
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
+	int maxIndex = PageFile::PAGE_SIZE;
+	
+	if(getKeyCount() < maxEntry)
+	{
+		return RC_INVALID_FILE_FORMAT;
+	}	
+
+	memset(sibling.buffer, 0, maxIndex);
+
+	int halfKeyCount = ( (int)((getKeyCount()+1)/2) );	//keys to remain in 1st half
+	int splitIndex = halfKeyCount * pairSize + 8;	//index to split (+ first PageID offset)
+
+	int lastFirstkey, firstLastkey;	//last key of 1st half & first key of 2nd half
+	memcpy(&lastFirstkey, buffer + splitIndex - 8, sizeof(int));
+	memcpy(&firstLastkey, buffer + splitIndex, sizeof(int));
+
+	if(key > firstLastkey) //firstLastkey = median key (to be removed)
+	{
+		memcpy(sibling.buffer + 8, buffer + splitIndex + 8, maxIndex - splitIndex - 8);	//copy right half from split except first key
+
+		sibling.keyCount = getKeyCount() - halfKeyCount - 1;	//sibling's key count
+
+		memcpy(&midKey, buffer + splitIndex, sizeof(int));	//copy median key before removing
+
+		memcpy(sibling.buffer, buffer + splitIndex + 4, sizeof(PageId));	//set sibling PageId before removing
+
+		memset(buffer + splitIndex, 0, maxIndex - splitIndex);
+		keyCount = halfKeyCount;
+
+		sibling.insert(key, pid);	//key larger than median; insert into sibling
+	}
+	if(key < lastFirstkey)	//lastFirstkey = median key (to be removed)
+	{
+		memcpy(sibling.buffer + 8, buffer + splitIndex, maxIndex - splitIndex);	//copy right half from split
+
+		sibling.keyCount = getKeyCount() - halfKeyCount;	//sibling's key count
+
+		memcpy(&midKey, buffer + splitIndex - 8, sizeof(int));	//copy median key before removing
+
+		memcpy(sibling.buffer, buffer + splitIndex - 4, sizeof(PageId));	//set sibling PageId before removing
+
+		memset(buffer + splitIndex - 8, 0, maxIndex - splitIndex + 8);
+		keyCount = halfKeyCount - 1;
+
+		insert(key, pid);	//key smaller than median; insert into buffer
+	}
+	else	//key = median key (to be removed)
+	{
+		memcpy(sibling.buffer + 8, buffer + splitIndex, maxIndex - splitIndex);	//copy right half from split
+
+		sibling.keyCount = getKeyCount() - halfKeyCount;	//sibling's key count
+
+		midKey = key;
+
+		memcpy(sibling.buffer, &pid, sizeof(PageId));
+
+		memset(buffer + splitIndex, 0, maxIndex - splitIndex);
+		keyCount = halfKeyCount;
+	}
+
+	return 0;
+}
 
 /*
  * Given the searchKey, find the child-node pointer to follow and
