@@ -67,7 +67,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		// Insert helper function; start from height 1
 		rc = insert_key(rid, key, rootPid, ret_key, ret_pid, 1);
 	}
-	treeHeight++;
   return rc;
 }
 
@@ -108,6 +107,7 @@ RC BTreeIndex::insert_key( const RecordId& rid, int key, PageId start_pid,  int&
 			
 			ret_pid = split_pid;
 			ret_key = s_key;
+			treeHeight++;
 			return rc;
 		}
 		return rc;
@@ -136,7 +136,7 @@ RC BTreeIndex::insert_key( const RecordId& rid, int key, PageId start_pid,  int&
 
 		ret_pid = split_pid;
 		ret_key = s_key;
-
+		treeHeight++;
 		return rc;
 	}
 }

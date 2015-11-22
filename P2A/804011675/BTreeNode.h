@@ -100,11 +100,7 @@ class BTLeafNode {
     * @return 0 if successful. Return an error code if there is an error.
     */
     RC write(PageId pid, PageFile& pf);
-
-   /**
-    * Holds boolean flag indicating this is a leaf node
-    */
-    const bool isLeaf = true;
+    
   private:
    /**
     * The main memory buffer for loading the content of the disk page 
@@ -188,11 +184,6 @@ class BTNonLeafNode {
     */
     RC write(PageId pid, PageFile& pf);
 
-
-   /**
-    * Holds boolean flag indicating this is a leaf node
-    */
-    const bool isLeaf = false;
   private:
    /**
     * The main memory buffer for loading the content of the disk page 
