@@ -237,7 +237,7 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 }
 
 /*
- * Return the pid of the next slibling node.
+ * Return the pid of the next sibling node.
  * @return the PageId of the next sibling node 
  */
 PageId BTLeafNode::getNextNodePtr()
@@ -252,7 +252,7 @@ PageId BTLeafNode::getNextNodePtr()
 }
 
 /*
- * Set the pid of the next slibling node.
+ * Set the pid of the next sibling node.
  * @param pid[IN] the PageId of the next sibling node 
  * @return 0 if successful. Return an error code if there is an error.
  */

@@ -49,7 +49,96 @@ RC BTreeIndex::close()
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
-    return 0;
+	RC rc;
+	// B Tree Empty
+	if (rootPid==-1) {
+		// Insert pair as root node
+		BTLeafNode rootNode;
+		rootPid = pf.endPid();
+		rc = rootNode.write(rootPid, pf);
+		rootNode.insert(key,rid);
+		treeHeight = 1;
+	}
+	// Find out where to insert new key & record
+	else {
+		// Return values (destination) for inserting
+		PageId ret_pid;
+		int ret_key;
+		// Insert helper function; start from height 1
+		rc = insert_key(rid, key, rootPid, ret_key, ret_pid, 1);
+	}
+	treeHeight++;
+  return rc;
+}
+
+RC BTreeIndex::insert_key( const RecordId& rid, int key, PageId start_pid,  int& ret_key, PageId ret_pid, int curr_height)
+{
+	RC rc;
+	// If the pid is a non-leaf node
+	if (curr_height != treeHeight) {
+		BTNonLeafNode nleafnode;
+		PageId next_pid, split_pid;
+		int split_key
+		
+		// Read node from pagefile
+		nleafnode.read(start_pid, pf);
+		nleafnode.locateChildPtr(key, next_pid);	// Determine where to go in the tree
+		
+		// Recursively use function until we reach a leaf node
+		// Try to insert starting from next_pid (next page id), which is in curr_height+1.
+		// Return values for pid and key in split_pid and split_key
+		rc = this->insert_key(key, rid, next_pid, curr_height+1, split_pid, split_key)
+		if (rc == RC_NODE_FULL) {
+			rc = nleafnode.insert(split_key, split_pid);
+			if (!rc) {	// Successfully insert
+				nleafnode.write(start_pid, pf);
+				return rc;
+			}
+			// Unsuccessful insert; node is full
+			rc = RC_NODE_FULL;
+			// Split node
+			int s_key;
+			BTNonLeafNode split_node;
+			nleafnode.insertAndSplit(split_key, split_pid, split_node, s_key);
+
+			PageId split_pid = pf.endPid();
+			//  Write the nodes
+			split_node.write(split_pid, pf);
+			nleafnode.write(start_pid, pf);
+			
+			ret_pid = split_pid;
+			ret_key = s_key;
+			return rc;
+		}
+		return rc;
+	}
+	// pid is a leaf node
+	else {
+		BTLeafNode leafnode;
+		leafnode.read(start_pid, pf);
+
+		rc = leafnode.insert(key, rid);
+		if (!rc) {	// Successfully insert
+			leafnode.write(start_pid, pf);
+			return rc;
+		}
+		// Unsuccessful insert; node is full
+		int s_key;
+		BTLeafNode split_node;
+		// Split the node
+		leafnode.insertAndSplit(key, rid, split_node, s_key);
+
+		PageId split_pid = pf.endPid();
+		leafnode.setNextNodePtr(split_pid);
+		// Write the nodes
+		split_node.write(split_pid, pf);
+		leafnode.write(start_pid, pf);
+
+		ret_pid = split_pid;
+		ret_key = s_key;
+
+		return rc;
+	}
 }
 
 /**
