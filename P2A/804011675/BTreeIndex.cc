@@ -178,7 +178,50 @@ RC BTreeIndex::insert_key( const RecordId& rid, int key, PageId start_pid,  int&
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
-    return 0;
+	BTLeafNode tempLeaf;
+	BTNonLeafNode tempNonLeaf;
+	
+	cursor.pid = rootPid;
+	int currHeight = 1;
+
+	RC check;
+	
+	while(currHeight != treeHeight)
+	{
+		check = tempNonLeaf.read(cursor.pid, pf);
+		
+		if(check < 0)	//check load errors
+		{
+			return check;
+		}
+		
+		//locate child node and update cursor.pid
+		check = tempNonLeaf.locateChildPtr(searchKey, cursor.pid);
+		
+		if(check < 0)	//check errors 
+		{
+			return check;
+		}
+		
+		currHeight++;
+	}
+	
+	check = tempLeaf.read(cursor.pid, pf);
+		
+	if(check < 0)	//check load errors
+	{
+		return check;
+	}
+	
+	//locate leaf node and update cursor.eid
+	check = tempLeaf.locate(searchKey, cursor.eid);
+	
+	if(check < 0)	//check errors 
+	{
+		return check;
+	}
+	
+	return 0;
 }
 
 /*
@@ -191,5 +234,39 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
-    return 0;
+	RC rc = 0;
+	BTLeafNode tempLeaf;
+	RC check;
+
+	while(true)
+	{
+		check = tempLeaf.read(cursor.pid, pf);
+
+		if(check < 0)	//check load errors
+		{
+			return check;
+		}
+
+		check = tempLeaf.readEntry(cursor.eid, key, rid);	//read the pair from cursor.eid
+
+		if(check < 0)	//check errors
+		{
+			return check;
+		}
+		
+		if(check == 0) 
+		{
+			cursor.eid++; //increment eid (points to next entry)
+			return 0;
+		}
+		
+		cursor.pid = tempLeaf.getNextNodePtr();	//record doesnt exist; get next node
+		cursor.eid = 0;
+
+		if(cursor.pid == INVALID_PID)	//no more nodes
+		  return RC_END_OF_TREE;
+		}
+	}
+
+	return rc;
 }
