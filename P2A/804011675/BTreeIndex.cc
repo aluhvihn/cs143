@@ -18,6 +18,7 @@ using namespace std;
 BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
+    treeHeight = 0;
 }
 
 /*
@@ -29,7 +30,22 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {
-    return 0;
+	RC check = pf.open(indexname, mode);
+
+	if(check < 0) 
+	{
+		return check;
+	}
+
+	rootPid = 0;
+
+	if(pf.endPid() <= 0) 	//index not initialized
+	{
+		BTLeafNode root;
+		return root.write(rootPid, pf);
+	}
+
+	return 0;
 }
 
 /*
@@ -38,7 +54,8 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-    return 0;
+    rootPid = -1;
+    return pf.close();
 }
 
 /*
