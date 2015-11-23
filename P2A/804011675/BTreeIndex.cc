@@ -9,6 +9,7 @@
  
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
+#include <stdio.h>
 
 using namespace std;
 
@@ -37,14 +38,13 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		return check;
 	}
 
-	rootPid = 0;
+	// rootPid = 0;
 
 	if(pf.endPid() <= 0) 	//index not initialized
 	{
 		BTLeafNode root;
 		return root.write(rootPid, pf);
 	}
-
 	return 0;
 }
 
@@ -54,7 +54,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-    rootPid = -1;
+    // rootPid = -1;
     return pf.close();
 }
 
@@ -69,6 +69,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	RC rc;
 	// B Tree Empty
 	if (rootPid==-1) {
+		printf("Got this far\n");
 		// Insert pair as root node
 		BTLeafNode rootNode;
 		rootPid = pf.endPid();
@@ -84,6 +85,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		// Insert helper function; start from height 1
 		rc = insert_key(rid, key, rootPid, ret_key, ret_pid, 1);
 	}
+	printf("%d\n", rootPid);
   return rc;
 }
 
@@ -94,7 +96,7 @@ RC BTreeIndex::insert_key( const RecordId& rid, int key, PageId start_pid,  int&
 	if (curr_height != treeHeight) {
 		BTNonLeafNode nleafnode;
 		PageId next_pid, split_pid;
-		int split_key
+		int split_key;
 		
 		// Read node from pagefile
 		nleafnode.read(start_pid, pf);
@@ -103,7 +105,7 @@ RC BTreeIndex::insert_key( const RecordId& rid, int key, PageId start_pid,  int&
 		// Recursively use function until we reach a leaf node
 		// Try to insert starting from next_pid (next page id), which is in curr_height+1.
 		// Return values for pid and key in split_pid and split_key
-		rc = this->insert_key(key, rid, next_pid, curr_height+1, split_pid, split_key)
+		rc = this->insert_key(rid, key, next_pid, split_key, split_pid, curr_height+1);
 		if (rc == RC_NODE_FULL) {
 			rc = nleafnode.insert(split_key, split_pid);
 			if (!rc) {	// Successfully insert
@@ -263,9 +265,8 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 		cursor.pid = tempLeaf.getNextNodePtr();	//record doesnt exist; get next node
 		cursor.eid = 0;
 
-		if(cursor.pid == INVALID_PID)	//no more nodes
-		  return RC_END_OF_TREE;
-		}
+		// if(cursor.pid == INVALID_PID)	//no more nodes
+		//   return RC_END_OF_TREE;
 	}
 
 	return rc;

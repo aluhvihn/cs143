@@ -1,4 +1,6 @@
 #include "BTreeNode.h"
+#include <string.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -156,7 +158,6 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	}
 
 	//Check which buffer to insert new (key, rid) into
-	int firstHalfKey;
 	memcpy(&firstHalfKey, sibling.buffer, sizeof(int));
 	
 	//Insert pair and increment number of keys
