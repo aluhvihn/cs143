@@ -35,6 +35,25 @@ RC SqlEngine::run(FILE* commandline)
   return 0;
 }
 
+bool useIndex(RC index_exists, const vector<SelCond>& cond) {
+  // if (index_exists == RC_FILE_OPEN_FAILED)
+  if (index_exists && cond.size()) {
+    return false;
+  }
+  for (int i = 0; i < cond.size(); i++) {
+    if (cond[i].attr == 2) {              // attr == 2 means value, not key - No index for value
+      return false;
+    }
+    if (cond[i].comp == SelCond::NE) {    // if doing a not equals comparison, we have to check all of the tuples - index not used
+      return false;
+    }
+    else {
+      return true;                        // other comparisons (equality or range) can all use index
+    }
+  }
+  return false;
+}
+
 RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 {
   RecordFile rf;   // RecordFile containing the table
@@ -53,73 +72,88 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   }
 
   BTreeIndex BTree;
-  int index = BTree.open(table + ".idx", 'r');  // If an index exists, will return 1
+  RC index_exists = BTree.open(table + ".idx", 'r');  // If an index exists, will return 1
 
   // scan the table file from the beginning
   rid.pid = rid.sid = 0;
   count = 0;
-  while (rid < rf.endRid()) {
-    // read the tuple
-    if ((rc = rf.read(rid, key, value)) < 0) {
-      fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
-      goto exit_select;
-    }
 
-    // check the conditions on the tuple
-    for (unsigned i = 0; i < cond.size(); i++) {
-      // compute the difference between the tuple value and the condition value
-      switch (cond[i].attr) {
-      case 1:
-	diff = key - atoi(cond[i].value);
-	break;
-      case 2:
-	diff = strcmp(value.c_str(), cond[i].value);
-	break;
+  // Using an index
+  if (useIndex(index_exists, cond)) {
+    printf("index_exists = %d Using Index!\n", index_exists);
+    vector<RecordId> rid_vec;
+    RC rc;
+    // Go through conditions
+    for (int i = 0; i < cond.size(); i ++){
+
+    }
+  }
+  // Not using index; default (original) method
+  else {
+    printf("index_exists = %d Not Using Index!\n", index_exists);
+    while (rid < rf.endRid()) {
+      // read the tuple
+      if ((rc = rf.read(rid, key, value)) < 0) {
+        fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+        goto exit_select;
       }
 
-      // skip the tuple if any condition is not met
-      switch (cond[i].comp) {
-      case SelCond::EQ:
-	if (diff != 0) goto next_tuple;
-	break;
-      case SelCond::NE:
-	if (diff == 0) goto next_tuple;
-	break;
-      case SelCond::GT:
-	if (diff <= 0) goto next_tuple;
-	break;
-      case SelCond::LT:
-	if (diff >= 0) goto next_tuple;
-	break;
-      case SelCond::GE:
-	if (diff < 0) goto next_tuple;
-	break;
-      case SelCond::LE:
-	if (diff > 0) goto next_tuple;
-	break;
+      // check the conditions on the tuple
+      for (unsigned i = 0; i < cond.size(); i++) {
+        // compute the difference between the tuple value and the condition value
+        switch (cond[i].attr) {
+          case 1:
+            diff = key - atoi(cond[i].value);
+            break;
+          case 2:
+            diff = strcmp(value.c_str(), cond[i].value);
+            break;
+        }
+
+        // skip the tuple if any condition is not met
+        switch (cond[i].comp) {
+          case SelCond::EQ:
+            if (diff != 0) goto next_tuple;
+            break;
+          case SelCond::NE:
+            if (diff == 0) goto next_tuple;
+            break;
+          case SelCond::GT:
+            if (diff <= 0) goto next_tuple;
+            break;
+          case SelCond::LT:
+            if (diff >= 0) goto next_tuple;
+            break;
+          case SelCond::GE:
+            if (diff < 0) goto next_tuple;
+            break;
+          case SelCond::LE:
+            if (diff > 0) goto next_tuple;
+            break;
+        }
       }
+
+      // the condition is met for the tuple. 
+      // increase matching tuple counter
+      count++;
+
+      // print the tuple 
+      switch (attr) {
+        case 1:  // SELECT key
+          fprintf(stdout, "%d\n", key);
+          break;
+        case 2:  // SELECT value
+          fprintf(stdout, "%s\n", value.c_str());
+          break;
+        case 3:  // SELECT *
+          fprintf(stdout, "%d '%s'\n", key, value.c_str());
+          break;
+      }
+
+      // move to the next tuple
+      next_tuple:
+      ++rid;
     }
-
-    // the condition is met for the tuple. 
-    // increase matching tuple counter
-    count++;
-
-    // print the tuple 
-    switch (attr) {
-    case 1:  // SELECT key
-      fprintf(stdout, "%d\n", key);
-      break;
-    case 2:  // SELECT value
-      fprintf(stdout, "%s\n", value.c_str());
-      break;
-    case 3:  // SELECT *
-      fprintf(stdout, "%d '%s'\n", key, value.c_str());
-      break;
-    }
-
-    // move to the next tuple
-    next_tuple:
-    ++rid;
   }
 
   // print matching tuple count if "select count(*)"

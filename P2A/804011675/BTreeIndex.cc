@@ -39,7 +39,9 @@ RC BTreeIndex::open(const string& indexname, char mode)
 	}
 
 	// rootPid = 0;
-	printf("%d\n", rootPid);
+	// printf("Open. rootPid: %d ", rootPid);
+	// printf("endPid: %d\n", pf.endPid());
+
 	if(pf.endPid() <= 0) 	//index not initialized
 	{
 		BTLeafNode root;
@@ -85,7 +87,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		// Insert helper function; start from height 1
 		rc = insert_key(rid, key, rootPid, ret_key, ret_pid, 1);
 	}
-	printf("%d ", rootPid);
+	// printf("Inserted %d. rootPID: %d \n", key, rootPid);
   return rc;
 }
 
