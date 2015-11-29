@@ -210,6 +210,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 		temp += pairSize;
 	}
 
+	eid = getKeyCount();
 	return RC_NO_SUCH_RECORD;
 }
 
