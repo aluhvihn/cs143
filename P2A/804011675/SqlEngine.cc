@@ -14,6 +14,7 @@
 #include <fstream>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
+#include "BTreeIndex.h"
 
 using namespace std;
 
@@ -50,6 +51,9 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     fprintf(stderr, "Error: table %s does not exist\n", table.c_str());
     return rc;
   }
+
+  BTreeIndex BTree;
+  int index = BTree.open(table + ".idx", 'r');  // If an index exists, will return 1
 
   // scan the table file from the beginning
   rid.pid = rid.sid = 0;
@@ -142,34 +146,73 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   int    diff;
   string line;
 
+  // With index
+  if (index) {
   // Open/create the table file
-  if ((rc = rf.open(table + ".tbl", 'w')) < 0) {
-    fprintf(stderr, "Error: Unable to create table %s\n", table.c_str());
-    return rc;
-  }
+    if ((rc = rf.open(table + ".tbl", 'w')) < 0) {
+      fprintf(stderr, "Error: Unable to create table %s\n", table.c_str());
+      return rc;
+    }
 
-  // Open loadfile
-  ifstream input_data;
-  input_data.open(loadfile.c_str());
-  // Error check
-  if (!input_data.is_open()) {
-    fprintf(stderr, "Error: Unable to open %s to read data\n", loadfile.c_str());
-    return RC_INVALID_ATTRIBUTE;
-  }
-  
-  // read from lines input_data until end of file
-  while (input_data.good() && getline(input_data, line)) {
-    // Get the key and value from the line
-    if (parseLoadLine(line, key, value) < 0) {
-      fprintf(stderr, "Error: Unable to parse data from file\n");
+    // Open loadfile
+    ifstream input_data;
+    input_data.open(loadfile.c_str());
+    // Error check
+    if (!input_data.is_open()) {
+      fprintf(stderr, "Error: Unable to open %s to read data\n", loadfile.c_str());
       return RC_INVALID_ATTRIBUTE;
     }
-    // Append key and value to RecordFile rc
-    if (rf.append(key, value, rid) < 0) {
-      fprintf(stderr, "Error: Unable to append data to RecordFile\n");
-      return RC_FILE_WRITE_FAILED;
+    
+    BTreeIndex BTree;
+    BTree.open(table+".index", 'w');
+
+    // read from lines input_data until end of file
+    while (input_data.good() && getline(input_data, line)) {
+      // Get the key and value from the line
+      if (parseLoadLine(line, key, value) < 0) {
+        fprintf(stderr, "Error: Unable to parse data from file\n");
+        return RC_INVALID_ATTRIBUTE;
+      }
+      // Append key and value to RecordFile rc
+      if (rf.append(key, value, rid) < 0) {
+        fprintf(stderr, "Error: Unable to append data to RecordFile\n");
+        return RC_FILE_WRITE_FAILED;
+      }
+      BTree.insert(key, rid);
     }
   }
+  // Without index
+  else {
+    // Open/create the table file
+    if ((rc = rf.open(table + ".tbl", 'w')) < 0) {
+      fprintf(stderr, "Error: Unable to create table %s\n", table.c_str());
+      return rc;
+    }
+
+    // Open loadfile
+    ifstream input_data;
+    input_data.open(loadfile.c_str());
+    // Error check
+    if (!input_data.is_open()) {
+      fprintf(stderr, "Error: Unable to open %s to read data\n", loadfile.c_str());
+      return RC_INVALID_ATTRIBUTE;
+    }
+
+    // read from lines input_data until end of file
+    while (input_data.good() && getline(input_data, line)) {
+      // Get the key and value from the line
+      if (parseLoadLine(line, key, value) < 0) {
+        fprintf(stderr, "Error: Unable to parse data from file\n");
+        return RC_INVALID_ATTRIBUTE;
+      }
+      // Append key and value to RecordFile rc
+      if (rf.append(key, value, rid) < 0) {
+        fprintf(stderr, "Error: Unable to append data to RecordFile\n");
+        return RC_FILE_WRITE_FAILED;
+      }
+    }
+  }
+  
   return 0;
 }
 
