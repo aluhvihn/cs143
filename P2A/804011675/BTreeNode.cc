@@ -43,12 +43,11 @@ int BTLeafNode::getKeyCount()
 	int pairSize = sizeof(int) + sizeof(RecordId);
 	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);	//last 4 bytes = PageId to next leaf node
 	int count = 0;
-	int i;
+	int i, curKey;
 	char* temp = buffer;
 
 	for(i = 0; i < maxIndex; i += pairSize)
 	{
-		int curKey;
 		memcpy(&curKey, temp, sizeof(int)); 
 		if(curKey == 0)
 			break;
@@ -71,7 +70,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 	int pairSize = sizeof(int) + sizeof(RecordId);
 	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
 	int maxIndex = PageFile::PAGE_SIZE - sizeof(PageId);
-	int i;
+	int i, curKey;
 	char* temp = buffer;
  
 	if (getKeyCount() >= maxEntry)
@@ -81,7 +80,6 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 
 	for(i = 0; i < maxIndex; i += pairSize)
 	{
-		int curKey;
 		memcpy(&curKey, temp, sizeof(int)); 
 		if( (key < curKey) || (curKey == 0) )
 			break;
@@ -134,11 +132,6 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 		return RC_INVALID_FILE_FORMAT;
 	}	
 
-	if(sibling.getKeyCount() != 0)
-	{
-		return RC_INVALID_ATTRIBUTE;
-	}
-
 	memset(sibling.buffer, 0, PageFile::PAGE_SIZE);
 
 	int halfKeyCount = ( (int)((getKeyCount()+1)/2) );	//keys to remain in 1st half
@@ -162,6 +155,19 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	else
 	{
 		sibling.insert(key,rid);
+	}
+
+	//Check which buffer to insert new (key, rid) into
+	memcpy(&firstHalfKey, sibling.buffer, sizeof(int));
+	
+	//Insert pair and increment number of keys
+	if(key>=firstHalfKey) //If our key belongs in the second buffer (since it's sorted)...
+	{
+		sibling.insert(key, rid);
+	}
+	else //Otherwise, place it in the first half
+	{
+		insert(key, rid);
 	}
 	
 	memcpy(&siblingKey, sibling.buffer, sizeof(int));	//copy sibling first key & rid
@@ -188,12 +194,11 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 RC BTLeafNode::locate(int searchKey, int& eid)
 {
 	int pairSize = sizeof(int) + sizeof(RecordId);
-	int i;
+	int i, curKey;
 	char* temp = buffer;
 
 	for(i = 0; i < getKeyCount() * pairSize; i++)
 	{
-		int curKey;
 		memcpy(&curKey, temp, sizeof(int));
 
 		if(curKey >= searchKey)
@@ -205,7 +210,6 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 		temp += pairSize;
 	}
 
-	eid = getKeyCount();
 	return RC_NO_SUCH_RECORD;
 }
 
@@ -301,15 +305,14 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
  */
 int BTNonLeafNode::getKeyCount()
 {
-	int pairSize = sizeof(int) + sizeof(PageId);
+	int pairSize = sizeof(int) + sizeof(RecordId);
 	int maxIndex = PageFile::PAGE_SIZE;
 	int count = 0;
-	int i;
+	int i, curKey;
 	char* temp = buffer + 8;	//skip first PageId (8 bytes)
 
 	for(i = 8; i < maxIndex; i += pairSize)
 	{
-		int curKey;
 		memcpy(&curKey, temp, sizeof(int));
 		if(curKey == 0)
 			break;
@@ -328,11 +331,11 @@ int BTNonLeafNode::getKeyCount()
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
 {
-	int pairSize = sizeof(int) + sizeof(PageId);
+	int pairSize = sizeof(int) + sizeof(RecordId);
 	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
 	int maxIndex = PageFile::PAGE_SIZE;
-	int i;
-	char* temp = buffer + 8;	//skip first PageId+4 empty = 8 bytes
+	int i, curKey;
+	char* temp = buffer + 8;	//skip first PageId (8 bytes)
 	
 	if (getKeyCount() >= maxEntry)
 	{
@@ -341,7 +344,6 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 
 	for(i = 8; i < maxIndex; i += pairSize)
 	{
-		int curKey;
 		memcpy(&curKey, temp, sizeof(int));
 		if( (key < curKey) || (curKey == 0) )
 			break;
@@ -379,26 +381,21 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
 {
-	int pairSize = sizeof(int) + sizeof(PageId);
+	int pairSize = sizeof(int) + sizeof(RecordId);
 	int maxEntry = (PageFile::PAGE_SIZE - sizeof(PageId))/pairSize;
 	int maxIndex = PageFile::PAGE_SIZE;
 	
 	if(getKeyCount() < maxEntry)
 	{
 		return RC_INVALID_FILE_FORMAT;
-	}
-
-	if(sibling.getKeyCount() != 0)
-	{
-		return RC_INVALID_ATTRIBUTE;
-	}
+	}	
 
 	memset(sibling.buffer, 0, maxIndex);
 
 	int halfKeyCount = ( (int)((getKeyCount()+1)/2) );	//keys to remain in 1st half
 	int splitIndex = halfKeyCount * pairSize + 8;	//index to split (+ first PageID offset)
 
-	int lastFirstkey = -1, firstLastkey = -1;	//last key of 1st half & first key of 2nd half
+	int lastFirstkey, firstLastkey;	//last key of 1st half & first key of 2nd half
 	memcpy(&lastFirstkey, buffer + splitIndex - 8, sizeof(int));
 	memcpy(&firstLastkey, buffer + splitIndex, sizeof(int));
 
@@ -417,7 +414,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 
 		sibling.insert(key, pid);	//key larger than median; insert into sibling
 	}
-	else if(key < lastFirstkey)	//lastFirstkey = median key (to be removed)
+	if(key < lastFirstkey)	//lastFirstkey = median key (to be removed)
 	{
 		memcpy(sibling.buffer + 8, buffer + splitIndex, maxIndex - splitIndex);	//copy right half from split
 
@@ -458,15 +455,14 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 {
-	int pairSize = sizeof(int) + sizeof(PageId);
-	int i;
+	int pairSize = sizeof(int) + sizeof(RecordId);
+	int i, curKey;
 	char* temp = buffer + 8;	//skip first PageId (8 bytes)
 
 	for(i = 8; i < getKeyCount() * pairSize + 8; i += pairSize)
 	{
-		int curKey;
 		memcpy(&curKey, temp, sizeof(int));
-		
+
 		if(curKey > searchKey)
 		{
 			if (i == 8)
